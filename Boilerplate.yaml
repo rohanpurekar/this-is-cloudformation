@@ -1,0 +1,40 @@
+---
+
+#AWSTemplateFormatVersion: '2010-09-09'
+
+#Description: 'Some Description'
+
+#Parameters:
+#Maximum 60 Parameters in a template.
+#  SomeParamName:
+#    Type: String    #String, Number, List<Numbers>, CommaDelimitedList, AWS Specific(AZ,Key Pairs), SSM Params (except List)
+#    Default: 'some-value'
+#    AllowedValues:
+#      - this-name
+#      - that-name
+#      - any-name
+#    Description: 'Some description about the parameter'   
+
+#Mappings:
+#  SomeConstant:
+#    NestedConstant1: Someval
+#    NestedConstant2: Otherval
+#  ThisConstant:
+#    NestedConstant1: thisval
+#    NestedConstant2: thatval
+
+#Resources:
+#  SomeLogicalName:
+#    Type: AWS::Set:Subset
+#    Properties:
+#      ResourceSpecificProp1: ohthatprop
+#      ResourceSpecificProp2:
+#        Fn::FindInMap:
+#        - SomeConstant
+#        - NestedConstant1
+#      Tags:
+#      - Key: Type
+#        Value: Some-Type-Name
+#      - Key: Name
+#        Value:
+#          Ref: SomeParamName 
