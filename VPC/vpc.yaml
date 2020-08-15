@@ -384,3 +384,26 @@ Resources:
       PortRange:
         From: '1024'
         To: '65535'
+
+########### ACL - Subnet Association
+  PublicSubnetACLAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      NetworkAclId:
+        Ref: PublicSubnetACL
+  PrivateSubnetACLAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet
+      NetworkAclId:
+        Ref: PrivateSubnetACL
+
+#Optional Section
+#Outputs return the resource attributes which are created by this templates. These attributes can be used during the creation of other resources. Nested stacks are a good example of such a scenario.
+Outputs:
+  VPCId:
+    Value:
+      Ref: VPC
