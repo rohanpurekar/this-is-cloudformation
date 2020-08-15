@@ -23,10 +23,10 @@ Mappings:
     VPC:
       CIDR: 20.0.0.0/16
     #The highest CIDR block a VPC can have is using a /16 netmask and the smallest can be using a /28 netmask. Source: AWS Docs.
-    Public1:
+    PublicSubnet:
       CIDR: 20.0.0.0/24
     #CIDR Block of the public subnet
-    Private1:
+    PrivateSubnet:
       CIDR: 20.0.1.0/24
     #CIDR Block of the private subnet
   RouterConfig:
@@ -35,4 +35,55 @@ Mappings:
     GatewayRoute:
       CIDR: 0.0.0.0/0
     NATGatewayRoute:
-      CIDR: 0.0.0.0/0 
+      CIDR: 0.0.0.0/0
+
+#Mandatory Section
+#Resources section is used to actually define and create the resources. It is the only mandatory section of the template.
+Resources:
+  VPC: #Logical ID: Just a normal name for identification.
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCConfig
+        - VPC
+        - CIDR
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-vpc'
+      - Key: Code
+        Value:
+          Ref: CodeName
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ1
+      VpcId:
+        Ref: VPC   #Reference to the VPC Created above
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCConfig
+        - PublicSubnet
+        - CIDR
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-public-subnet'
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ1
+      VpcId:
+        Ref: VPC
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCConfig
+        - PrivateSubnet
+        - CIDR
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-private-subnet'
+  
