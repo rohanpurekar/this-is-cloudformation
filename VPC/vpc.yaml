@@ -363,11 +363,7 @@ Resources:
       Protocol: '6'
       RuleAction: allow
       Egress: 'false'
-      CidrBlock: 
-        Fn::FindInMap:
-          - VPCConfig
-          - VPC       
-          - CIDR
+      CidrBlock: 0.0.0.0/0
       PortRange:
         From: '1024'
         To: '65535'
