@@ -29,7 +29,7 @@ Resources:
       GroupDescription: 'This is the Jump Server security group which is applied to the bastion host. The bastion host is used to SSH into the servers inside the private subnet'
       VpcId:
         Ref: VPCId
-      GroupName: 'Production-Bastion-Host-Security-Group'
+      GroupName: 'Bastion-Host-Security-Group'
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 22
@@ -40,6 +40,9 @@ Resources:
           - SubnetConfig
           - World
           - CIDR
+      Tags:
+      - Key: Name
+        Value: 'Bastion-Host-Security-Group'
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -67,6 +70,9 @@ Resources:
           - SubnetConfig
           - World
           - CIDR
+      Tags:
+      - Key: Name
+        Value: 'Load-Balancer-Security-Group'
       
 
   WebserverSecurityGroup:
@@ -78,7 +84,7 @@ Resources:
       GroupDescription: 'This is the webserver security group which accepts connections from Load Balancer SG and NAT SG.'
       VpcId:
         Ref: VPCId
-      GroupName: 'Production-Webserver-Security-Group'
+      GroupName: 'Webserver-Security-Group'
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 80
@@ -98,6 +104,10 @@ Resources:
         Description: 'Allow SSH'
         SourceSecurityGroupId:
           Ref: JumpServerSecurityGroup
+      Tags:
+      - Key: Name
+        Value: 'Webserver-Security-Group'
+      
   
   DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -107,7 +117,7 @@ Resources:
       GroupDescription: 'This is the security group that will allow the database to accept connections from the webserver.'
       VpcId:
         Ref: VPCId
-      GroupName: 'Production-Database-Security-Group'
+      GroupName: 'Database-Security-Group'
       SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 3306
@@ -115,4 +125,7 @@ Resources:
         Description: 'Allow DB Connections'
         SourceSecurityGroupId:
           Ref: WebserverSecurityGroup
+      Tags:
+      - Key: Name
+        Value: 'Database-Security-Group'
   
