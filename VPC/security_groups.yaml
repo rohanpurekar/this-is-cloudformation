@@ -1,0 +1,118 @@
+---
+
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'This template creates security groups for the Bastion host, Webserver and the RDS Instance'
+
+Parameters:
+  CodeName:
+    Type: String
+    Default: 'prod-sg'
+  VPCId:
+    Type: AWS::EC2::VPC::Id
+
+Mappings:
+  SubnetConfig:
+    VPCId:
+      CIDR: 20.0.0.0/16
+    Public:
+      CIDR: 20.0.0.0/24
+    Private:
+      CIDR: 20.0.1.0/24
+    World:
+      CIDR: 0.0.0.0/0
+
+Resources:
+  JumpServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'This is the Jump Server security group which is applied to the bastion host. The bastion host is used to SSH into the servers inside the private subnet'
+      VpcId:
+        Ref: VPCId
+      GroupName: 'Production-Bastion-Host-Security-Group'
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        Description: 'Allow SSH'
+        CidrIp:
+          Fn::FindInMap:
+          - SubnetConfig
+          - World
+          - CIDR
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: 'This is the security group which needs to be applied to the internet facing load balancer.'
+      GroupName: 'Load-Balancer-Security-Group'
+      VpcId:
+        Ref: VPCId
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        Description: 'Allow HTTP'
+        CidrIp:
+          Fn::FindInMap:
+          - SubnetConfig
+          - World
+          - CIDR
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        Description: 'Allow HTTPs'
+        CidrIp:
+          Fn::FindInMap:
+          - SubnetConfig
+          - World
+          - CIDR
+      
+
+  WebserverSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: 
+    - JumpServerSecurityGroup
+    - LoadBalancerSecurityGroup
+    Properties:
+      GroupDescription: 'This is the webserver security group which accepts connections from Load Balancer SG and NAT SG.'
+      VpcId:
+        Ref: VPCId
+      GroupName: 'Production-Webserver-Security-Group'
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        Description: 'Allow HTTP'
+        SourceSecurityGroupId:
+          Ref: LoadBalancerSecurityGroup
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        Description: 'Allow HTTPs'
+        SourceSecurityGroupId:
+          Ref: LoadBalancerSecurityGroup
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        Description: 'Allow SSH'
+        SourceSecurityGroupId:
+          Ref: JumpServerSecurityGroup
+  
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn: 
+    - WebserverSecurityGroup
+    Properties:
+      GroupDescription: 'This is the security group that will allow the database to accept connections from the webserver.'
+      VpcId:
+        Ref: VPCId
+      GroupName: 'Production-Database-Security-Group'
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
+        Description: 'Allow DB Connections'
+        SourceSecurityGroupId:
+          Ref: WebserverSecurityGroup
+  
