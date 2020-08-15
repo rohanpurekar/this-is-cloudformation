@@ -1,0 +1,46 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'This template creates bastion host in the public subnet'
+
+Parameters:
+  RoleName:
+    Type: String
+    Default: 'rcloud-ec2-role'
+  Instance:
+    Type: String
+    Default: 't3.nano'
+    AllowedValues:
+    - 't3.nano'
+    - 't3.micro'
+    - 't3.small'
+  WebserverAMI:
+    Type: String
+    Default: 'ami-02b5fbc2cb28b77b8'
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+  SubnetID:
+    Type: Type: AWS::EC2::Subnet::Id
+  WebserverSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  WebserverHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType:
+        Ref: InstanceType
+      KeyName: 
+        Ref: KeyName
+      ImageId:
+        Ref: WebserverAMI
+      SubnetId:
+        Ref: SubnetID
+      IamInstanceProfile:
+        Ref: RoleName
+      SecurityGroupIds:
+        Ref: WebserverSecurityGroup
+      NetworkInterfaces:  
+      - AssociatePublicIpAddress: 'false'
+        DeleteOnTermination: 'true'
+        DeviceIndex: 0
