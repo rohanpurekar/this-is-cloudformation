@@ -1,0 +1,24 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Creates the ELB in the public subnet'
+
+Parameters:
+  ELBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+  # subnets in which ELB to launch
+  PublicSubnet:
+    Type: AWS::EC2::Subnet::Id
+
+Resources:
+  ApplicationELB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      SecurityGroups:
+        Ref: ELBSecurityGroup
+      Scheme: 'internet-facing'
+      Subnets:
+        Ref: PublicSubnet
+      Name: 'my-prod-application-elb'
+      

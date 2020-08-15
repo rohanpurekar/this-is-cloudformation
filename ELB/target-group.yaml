@@ -1,0 +1,39 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Creates the target group for the webserver'
+
+Parameters:
+  VPCId:
+    Ref: AWS::EC2::VPC::Id
+  WebserverId:
+    Type: String
+
+
+
+Resource:
+  WebserverTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: 'webserver-target-group'
+      Port: 80
+      Protocol: HTTP
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /
+      HealthCheckPort: 80
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 30
+      HealthyThresholdCount: 4
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+      Targets:
+        Id:
+          Ref: WebserverId
+        Port: 80
+      TargetType: instance
+      VpcId:
+        Ref: VPCId
+      Tags:
+      - Key: Name
+        Value: 'my-prod-webserver-target-group'

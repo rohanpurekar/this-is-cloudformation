@@ -1,0 +1,23 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Creates listener rules for the ELB'
+
+Parameters:
+  ELBArn:
+    Type: String
+  TargetGroupARN:
+    Type: String
+
+Resources:
+  ELBListerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Port: '80'
+      LoadBalancerArn:
+        Ref: ELBArn
+      Protocol: HTTP
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: TargetGroupARN
