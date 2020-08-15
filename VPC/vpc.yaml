@@ -1,0 +1,38 @@
+---
+#Optional Section
+AWSTemplateFormatVersion: '2010-09-09' 
+
+#Optional Section
+#You can write a brief description to explain what this template will create.
+Description: 'You can use this cloudformation template to create a VPC with 2 subnets in the same Availability Zone. This template will create a public and a private subnet. It will also create an IGW and a NAT g/w.'
+
+#Optional Section
+#This is like declaring variables which will be assigned external values. These values will be provided during the stack creation. For e.g.: If you want to assign a uniform code name like 'staging-vpc' you can accept that as a parameter and use that variable everywhere for name assignment. This template has such an example.
+Parameters:
+  CodeName:
+    Type: String
+    Default: 'my-prod-vpc'
+  AZ1:
+    Type: AWS::EC2::AvailabilityZone::Name
+
+
+#Optional Section
+#Mappings are similar to constants in a normal programming terminology. We can Assign values to mappings which can be consumed for various tasks in the template.
+Mappings:
+  VPCConfig:
+    VPC:
+      CIDR: 20.0.0.0/16
+    #The highest CIDR block a VPC can have is using a /16 netmask and the smallest can be using a /28 netmask. Source: AWS Docs.
+    Public1:
+      CIDR: 20.0.0.0/24
+    #CIDR Block of the public subnet
+    Private1:
+      CIDR: 20.0.1.0/24
+    #CIDR Block of the private subnet
+  RouterConfig:
+    InternalRoute:
+      CIDR: 20.0.0.0/16
+    GatewayRoute:
+      CIDR: 0.0.0.0/0
+    NATGatewayRoute:
+      CIDR: 0.0.0.0/0 
