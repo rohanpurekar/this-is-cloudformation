@@ -40,6 +40,7 @@ Mappings:
 #Mandatory Section
 #Resources section is used to actually define and create the resources. It is the only mandatory section of the template.
 Resources:
+########### VPC 
   VPC: #Logical ID: Just a normal name for identification.
     Type: AWS::EC2::VPC
     Properties:
@@ -56,6 +57,7 @@ Resources:
       - Key: Code
         Value:
           Ref: CodeName
+########### Subnets
   PublicSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -86,6 +88,7 @@ Resources:
       Tags: 
       - Key: Name
         Value: 'my-prod-private-subnet'
+########### Gateways
   ElasticIP:
     Type: "AWS::EC2::EIP"
     Properties:
@@ -105,6 +108,7 @@ Resources:
         Ref: InternetGateway
   NATGateway:
     Type: AWS::EC2::NatGateway
+    DependsOn: ElasticIP
     Properties:
       AllocationId: 
         Fn::GetAtt:
@@ -112,3 +116,137 @@ Resources:
           - AllocationId
       SubnetId:
         Ref: PrivateSubnet
+########### Route Tables
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-vpc-public-routes'
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-vpc-private-routes'
+########### Routes
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId:
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 
+        Fn::FindInMap:
+        - RouterConfig
+        - GatewayRoute
+        - CIDR
+      GatewayId:
+        Ref: InternetGateway
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    DependsOn: NATGateway
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable
+      DestinationCidrBlock: 
+        Fn::FindInMap:
+        - RouterConfig
+        - NATGatewayRoute
+        - CIDR
+      NatGatewayId:
+        Ref: NATGateway
+
+########### Route Association
+  PublicSubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet
+      RouteTableId:
+        Ref: PublicRouteTable
+  PrivateSubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet
+      RouteTableId:
+        Ref: PrivateRouteTable
+
+########### ACL Declaration
+  PublicSubnetACL:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: 'my-prod-vpc-public-acl'
+
+  PrivateSubnetACL:
+    Type: AWS::EC2::NetworkAcl
+    Properties:
+      VpcId:
+        Ref: VPC
+      Tags:
+      - Key: Name
+        Value: 'my-prod-vpc-private-acl'
+
+########### Public ACL Routes
+  InboundSSHPublicACL:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Ref: PublicSubnetACL
+      RuleNumber: '10'
+      Protocol: '6'
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: 0.0.0.0/0 
+      PortRange:
+        From: '22'
+        To: '22'
+  InboundHTTPPublicACL:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Ref: PublicSubnetACL
+      RuleNumber: '10'
+      Protocol: '6'
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: '80'
+        To: '80'
+  InboundHTTPSPublicACL:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Ref: PublicSubnetACL
+      RuleNumber: '10'
+      Protocol: '6'
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: '443'
+        To: '443'
+  InboundEphemeralPublicACL:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      NetworkAclId:
+        Ref: PublicSubnetACL
+      RuleNumber: '10'
+      Protocol: '6'
+      RuleAction: allow
+      Egress: 'false'
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: '1024'
+        To: '65535'
