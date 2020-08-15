@@ -86,4 +86,29 @@ Resources:
       Tags: 
       - Key: Name
         Value: 'my-prod-private-subnet'
-  
+  ElasticIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: vpc
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-vpc-internet-gateway'
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: VPC
+      InternetGatewayId:
+        Ref: InternetGateway
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: 
+        Fn::GetAtt:
+          - ElasticIP
+          - AllocationId
+      SubnetId:
+        Ref: PrivateSubnet
