@@ -11,3 +11,4 @@ This repository consists of AWS Cloudformation templates which can be used to cr
 * 1 Application Load Balancer and an associated Target Group
 * 1 Elastic Compute Cloud Instance
 * 1 Relational Database Service Instance
+* Necessary Security Groups for the Bastion Host, EC2 Instance and the RDSinstance
