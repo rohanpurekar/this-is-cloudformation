@@ -15,6 +15,13 @@
 #      - any-name
 #    Description: 'Some description about the parameter'   
 
+#Conditions:
+#  ProdEnvironment:
+#    Fn::Equals:
+#      Ref: 
+#        - Env
+#        - prod
+
 #Mappings:
 #  SomeConstant:
 #    NestedConstant1: Someval
@@ -38,3 +45,9 @@
 #      - Key: Name
 #        Value:
 #          Ref: SomeParamName 
+
+
+#Outputs:
+#  VPCExample:
+#    Value:
+#      Ref: VPC
