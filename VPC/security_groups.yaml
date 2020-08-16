@@ -128,4 +128,22 @@ Resources:
       Tags:
       - Key: Name
         Value: 'Database-Security-Group'
+
+Outputs:
+  JumpServerSG:
+    Description: 'Output Jump Server Security Group ID'
+    Value:
+      Ref: JumpServerSecurityGroup
+  LoadBalancerSG:
+    Description: 'Output Load Balancer Security Group ID'
+    Value:
+      Ref: LoadBalancerSecurityGroup
+  WebServerSG:
+    Description: 'Output Web Server Security Group ID'
+    Value:
+      Ref: WebserverSecurityGroup
+  DatabaseSG:
+    Description: 'Output Database Security Group ID'
+    Value:
+      Ref: DatabaseSecurityGroup
   
