@@ -5,9 +5,11 @@ Description: 'Creates the ELB in the public subnet'
 
 Parameters:
   ELBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
+    Type: 'List<AWS::EC2::SecurityGroup::Id>'
   # subnets in which ELB to launch
   PublicSubnet:
+    Type: AWS::EC2::Subnet::Id
+  PublicSubnet2:
     Type: AWS::EC2::Subnet::Id
 
 Resources:
@@ -19,6 +21,12 @@ Resources:
         Ref: ELBSecurityGroup
       Scheme: 'internet-facing'
       Subnets:
-        Ref: PublicSubnet
+      - Ref: PublicSubnet
+      - Ref: PublicSubnet2
       Name: 'my-prod-application-elb'
-      
+
+Outputs:
+  ELBArn:
+    Description: 'Output the ELB Arn'
+    Value:
+      Ref: ApplicationELB
