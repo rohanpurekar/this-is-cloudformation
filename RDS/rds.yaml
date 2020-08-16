@@ -7,39 +7,44 @@ Parameters:
   DBStorageSize:
     Type: String
     Default: 20
-  DatabseSecurityGroup:
+  DatabaseSecurityGroup:
     Type: 'List<AWS::EC2::SecurityGroup::Id>'
   DBInstanceType:
     Type: String
-    Default: t3.micro
+    Default: db.t3.micro
     AllowedValues:
-    - t3.micro
-    - t3.small
-    - t3.medium
+    - db.t3.micro
+    - db.t3.small
+    - db.t3.medium
   DBInstanceName:
     Type: String
     Default: 'my-prod-db'
-  DBSubnetGroup:
-    Type: String
   DBParameterGroup:
     Type: String
+    Default: 'my-prod-rds-pg'
   DBEngine:
     Type: String
     Default: MySQL
-  DBEngineVersion:
-    Type: String
-    Default: '5.6.40'
   DBUser:
     Type: String
   DBPassword:
     Type: String
     NoEcho: true
     Default: 'admin123'  ## Just for understanding. Ideally secrets manager must be used.
-  DBPort:
-    Type: String
-    Default: '3306' 
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet::Id 
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id 
 
 Resources:
+  SubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group associated for the DB instance 
+      SubnetIds:
+      - Ref: PrivateSubnet
+      - Ref: PrivateSubnet2
+
   DatabaseInstance:
     Type: AWS::RDS::DBInstance
     Properties: 
@@ -49,24 +54,26 @@ Resources:
       BackupRetentionPeriod: '3'
       CopyTagsToSnapshot: true
       CACertificateIdentifier: 'rds-ca-2019'
-      DBName: 'my-prod-rds'
+      DBName: 'myproddb'
       DBInstanceClass: 
         Ref: DBInstanceType
       DBInstanceIdentifier:
         Ref: DBInstanceName
-      DBSubnetGroupName: DBSubnetGroup
-      DBParameterGroupName: DBParameterGroup
+      DBSubnetGroupName:
+        Ref: SubnetGroup
+      DBParameterGroupName: 
+        Ref: DBParameterGroup
       EnableCloudwatchLogsExports: ['slowquery','general','audit','error']
       Engine:
         Ref: DBEngine
-      EngineVersion: DBEngineVersion
+      EngineVersion: '5.6.48'
       MasterUsername:
         Ref: DBUser
       MasterUserPassword:
         Ref: DBPassword
-      Port: DBPort
+      Port: 3306
       PubliclyAccessible: false
       StorageType: 'gp2'
       DeletionProtection: false
       VPCSecurityGroups:
-      - Ref: DatabseSecurityGroup
+        Ref: DatabaseSecurityGroup
