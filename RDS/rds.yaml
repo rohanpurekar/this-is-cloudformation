@@ -8,7 +8,7 @@ Parameters:
     Type: String
     Default: 20
   DatabseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
+    Type: 'List<AWS::EC2::SecurityGroup::Id>'
   DBInstanceType:
     Type: String
     Default: t3.micro
