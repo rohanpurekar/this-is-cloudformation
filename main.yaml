@@ -37,6 +37,27 @@ Parameters:
   WebserverAMI:
     Type: String
     Default: 'ami-02b5fbc2cb28b77b8'
+  DBStorageSize:
+    Type: String
+    Default: 20
+  DBInstanceType:
+    Type: String
+    Default: db.t3.micro
+    AllowedValues:
+    - db.t3.micro
+    - db.t3.small
+    - db.t3.medium
+  DBInstanceName:
+    Type: String
+    Default: 'my-prod-db'
+  DBParameterGroup:
+    Type: String
+    Default: 'my-prod-rds-pg'
+  DBEngine:
+    Type: String
+    Default: MySQL
+  DBUser:
+    Type: String
 
 Metadata:
   # parameter groups enable you to categorize params
@@ -60,6 +81,15 @@ Metadata:
       Parameters:
       - WSInstance
       - WebserverAMI
+    - Label:
+        default: 'RDS Database Configuration'
+      Parameters:
+      - DBStorageSize
+      - DBInstanceType
+      - DBInstanceName
+      - DBParameterGroup
+      - DBEngine
+      - DBUser
         
 
 Mappings:
@@ -78,6 +108,8 @@ Mappings:
       URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/EC2/bastion.yaml'
     Webserver:
       URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/EC2/webserver.yaml'
+    RDS:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/RDS/rds.yaml'
 
 Resources:
   VPC:
@@ -236,4 +268,40 @@ Resources:
           Fn::GetAtt:
             - ELBTargetGroup
             - Outputs.TargetGroup
+  RDSInstance:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - SecurityGroups
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - RDS
+        - URL
+      Parameters:
+        DBStorageSize:
+          Ref: DBStorageSize
+        DatabaseSecurityGroup:
+          Fn::GetAtt:
+          - SecurityGroups
+          - Outputs.DatabaseSG
+        DBInstanceType:
+          Ref: DBInstanceType
+        DBInstanceName:
+          Ref: DBInstanceName
+        DBParameterGroup:
+          Ref: DBParameterGroup
+        DBEngine:
+          Ref: DBEngine
+        DBUser:
+          Ref: DBUser
+        PrivateSubnet:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.PrivateSubnet
+        PrivateSubnet2:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.PrivateSubnet2
+
       
