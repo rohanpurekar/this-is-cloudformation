@@ -1,0 +1,239 @@
+---
+
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'This is the entrypoint of the whole cloudformation stack. These templates will create a VPC and some internal resources which can be used to host a website.'
+
+Parameters:
+  CodeName:
+    Type: String
+    Default: 'my-prod-vpc'
+  AZ1:
+    Type: AWS::EC2::AvailabilityZone::Name
+  AZ2:
+    Type: AWS::EC2::AvailabilityZone::Name
+  InstanceRoleName:
+    Type: String
+    Default: 'rcloud-ec2-role'
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+  BastionInstance:
+    Type: String
+    Default: 't3.nano'
+    AllowedValues:
+    - 't3.nano'
+    - 't3.micro'
+    - 't3.small'
+  BastionAMI:
+    Type: String
+    Default: 'ami-01c30c99d674913a6'
+  WSInstance:
+    Type: String
+    Default: 't3.nano'
+    AllowedValues:
+    - 't3.nano'
+    - 't3.micro'
+    - 't3.small'
+  WebserverAMI:
+    Type: String
+    Default: 'ami-02b5fbc2cb28b77b8'
+
+Metadata:
+  # parameter groups enable you to categorize params
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "General Configuration"
+      Parameters:
+      - CodeName
+      - AZ1
+      - AZ2
+      - InstanceRoleName
+      - KeyName
+    - Label:
+        default: 'Bastion Host Configuration'
+      Parameters:
+      - BastionInstance
+      - BastionAMI
+    - Label:
+        default: 'Webserver Configuration'
+      Parameters:
+      - WSInstance
+      - WebserverAMI
+        
+
+Mappings:
+  Templates:
+    VPC:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/VPC/vpc.yaml'
+    SecurityGroups:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/VPC/security_groups.yaml'
+    ELB:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/ELB/elb.yaml'
+    ELBTargetGroup:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/ELB/target-group.yaml'
+    ELBListener:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/ELB/elb-listeners.yaml'
+    BastionHost:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/EC2/bastion.yaml'
+    Webserver:
+      URL: 'https://rohans-first-bucket.s3.ap-south-1.amazonaws.com/EC2/webserver.yaml'
+
+Resources:
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - VPC
+        - URL
+      Parameters:
+        CodeName:
+          Ref: CodeName
+        AZ1:
+          Ref: AZ1
+        AZ2:
+          Ref: AZ2
+  
+  SecurityGroups:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPC
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - SecurityGroups
+        - URL
+      Parameters:
+        CodeName:
+          Ref: CodeName
+        VPCId:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.VPCId
+
+  BastionHost:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - SecurityGroups
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - BastionHost
+        - URL
+      Parameters:
+        RoleName:
+          Ref: InstanceRoleName
+        Instance:
+          Ref: BastionInstance
+        BastionAMI:
+          Ref: BastionAMI
+        KeyName:
+          Ref: KeyName
+        SubnetID:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.PublicSubnet
+        BastionSecurityGroup:
+          Fn::GetAtt:
+          - SecurityGroups
+          - Outputs.JumpServerSG
+        
+  
+  Webserver:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - SecurityGroups
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - Webserver
+        - URL
+      Parameters:
+        RoleName:
+          Ref: InstanceRoleName
+        Instance:
+          Ref: WSInstance
+        WebserverAMI:
+          Ref: WebserverAMI
+        KeyName:
+          Ref: KeyName
+        SubnetID:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.PrivateSubnet
+        WebserverSecurityGroup:
+          Fn::GetAtt:
+          - SecurityGroups
+          - Outputs.WebServerSG
+
+  ELB:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - SecurityGroups
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - ELB
+        - URL
+      Parameters:
+        ELBSecurityGroup:
+          Fn::GetAtt:
+          - SecurityGroups
+          - Outputs.LoadBalancerSG
+        PublicSubnet:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.PublicSubnet
+        PublicSubnet2:
+          Fn::GetAtt:
+          - VPC
+          - Outputs.PublicSubnet2
+  
+  ELBTargetGroup:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - VPC
+    - Webserver
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - ELBTargetGroup
+        - URL
+      Parameters:
+        VPCId:
+          Fn::GetAtt:
+            - VPC
+            - Outputs.VPCId
+        WebserverId:
+          Fn::GetAtt:
+            - Webserver
+            - Outputs.WebserverInstance
+
+
+  ELBListeners:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+    - ELBTargetGroup
+    - ELB
+    Properties:
+      TemplateURL: 
+        Fn::FindInMap:
+        - Templates
+        - ELBListener
+        - URL
+      Parameters:
+        ELBArn:
+          Fn::GetAtt:
+            - ELB
+            - Outputs.ELBArn
+        TargetGroupARN:
+          Fn::GetAtt:
+            - ELBTargetGroup
+            - Outputs.TargetGroup
+      
