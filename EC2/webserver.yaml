@@ -20,27 +20,33 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
   SubnetID:
-    Type: Type: AWS::EC2::Subnet::Id
+    Type: AWS::EC2::Subnet::Id
   WebserverSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
+    Type: 'List<AWS::EC2::SecurityGroup::Id>'
 
 Resources:
   WebserverHost:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType:
-        Ref: InstanceType
+        Ref: Instance
       KeyName: 
         Ref: KeyName
       ImageId:
         Ref: WebserverAMI
-      SubnetId:
-        Ref: SubnetID
       IamInstanceProfile:
         Ref: RoleName
-      SecurityGroupIds:
-        Ref: WebserverSecurityGroup
       NetworkInterfaces:  
       - AssociatePublicIpAddress: 'false'
         DeleteOnTermination: 'true'
         DeviceIndex: 0
+        GroupSet:
+          Ref: WebserverSecurityGroup
+        SubnetId:
+          Ref: SubnetID
+
+Outputs:
+  WebserverInstance:
+    Description: 'Output the instance ID for the target group'
+    Value:
+      Ref: WebserverHost
