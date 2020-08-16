@@ -5,13 +5,13 @@ Description: 'Creates the target group for the webserver'
 
 Parameters:
   VPCId:
-    Ref: AWS::EC2::VPC::Id
+    Type: AWS::EC2::VPC::Id
   WebserverId:
     Type: String
 
 
 
-Resource:
+Resources:
   WebserverTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -22,18 +22,24 @@ Resource:
       HealthCheckPath: /
       HealthCheckPort: 80
       HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 30
+      HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 4
       UnhealthyThresholdCount: 2
       Matcher:
         HttpCode: 200
       Targets:
-        Id:
-          Ref: WebserverId
-        Port: 80
+        - Id:
+            Ref: WebserverId
+          Port: 80
       TargetType: instance
       VpcId:
         Ref: VPCId
       Tags:
       - Key: Name
         Value: 'my-prod-webserver-target-group'
+
+Outputs:
+  TargetGroup:
+    Description: 'Output the Target Group ARN'
+    Value:
+      Ref: WebserverTargetGroup
