@@ -32,6 +32,8 @@ Mappings:
     #CIDR Block of the public subnet
     PrivateSubnet:
       CIDR: 20.0.1.0/24
+    PrivateSubnet2:
+      CIDR: 20.0.3.0/24
     #CIDR Block of the private subnet
   RouterConfig:
     InternalRoute:
@@ -107,6 +109,21 @@ Resources:
       Tags: 
       - Key: Name
         Value: 'my-prod-private-subnet'
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ2
+      VpcId:
+        Ref: VPC
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCConfig
+        - PrivateSubnet2
+        - CIDR
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-private-subnet-2'
 ########### Gateways
   ElasticIP:
     Type: "AWS::EC2::EIP"
@@ -201,6 +218,13 @@ Resources:
     Properties:
       SubnetId:
         Ref: PrivateSubnet
+      RouteTableId:
+        Ref: PrivateRouteTable
+  PrivateSubnet2RouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet2
       RouteTableId:
         Ref: PrivateRouteTable
 
@@ -415,7 +439,7 @@ Resources:
         Ref: PublicSubnet
       NetworkAclId:
         Ref: PublicSubnetACL
-  PublicSubnetACLAssociation:
+  PublicSubnet2ACLAssociation:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       SubnetId:
@@ -427,6 +451,13 @@ Resources:
     Properties:
       SubnetId:
         Ref: PrivateSubnet
+      NetworkAclId:
+        Ref: PrivateSubnetACL
+  PrivateSubnet2ACLAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Ref: PrivateSubnet2
       NetworkAclId:
         Ref: PrivateSubnetACL
 
@@ -449,3 +480,7 @@ Outputs:
     Description: 'Output the SubnetID of the public Subnet 2'
     Value:
       Ref: PublicSubnet2
+  PrivateSubnet2:
+    Description: 'Output the SubnetID of the public Subnet'
+    Value:
+      Ref: PrivateSubnet2
