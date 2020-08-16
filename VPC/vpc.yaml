@@ -14,6 +14,8 @@ Parameters:
     Default: 'my-prod-vpc'
   AZ1:
     Type: AWS::EC2::AvailabilityZone::Name
+  AZ2:
+    Type: AWS::EC2::AvailabilityZone::Name
 
 
 #Optional Section
@@ -25,6 +27,8 @@ Mappings:
     #The highest CIDR block a VPC can have is using a /16 netmask and the smallest can be using a /28 netmask. Source: AWS Docs.
     PublicSubnet:
       CIDR: 20.0.0.0/24
+    PublicSubnet2:
+      CIDR: 20.0.2.0/24
     #CIDR Block of the public subnet
     PrivateSubnet:
       CIDR: 20.0.1.0/24
@@ -73,6 +77,21 @@ Resources:
       Tags: 
       - Key: Name
         Value: 'my-prod-public-subnet'
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+        Ref: AZ2
+      VpcId:
+        Ref: VPC
+      CidrBlock:
+        Fn::FindInMap:
+        - VPCConfig
+        - PublicSubnet2
+        - CIDR
+      Tags: 
+      - Key: Name
+        Value: 'my-prod-public-subnet-2'
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -168,6 +187,13 @@ Resources:
     Properties:
       SubnetId:
         Ref: PublicSubnet
+      RouteTableId:
+        Ref: PublicRouteTable
+  PublicSubnet2RouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet2
       RouteTableId:
         Ref: PublicRouteTable
   PrivateSubnetRouteAssociation:
@@ -389,6 +415,13 @@ Resources:
         Ref: PublicSubnet
       NetworkAclId:
         Ref: PublicSubnetACL
+  PublicSubnetACLAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId:
+        Ref: PublicSubnet2
+      NetworkAclId:
+        Ref: PublicSubnetACL
   PrivateSubnetACLAssociation:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
@@ -401,5 +434,18 @@ Resources:
 #Outputs return the resource attributes which are created by this templates. These attributes can be used during the creation of other resources. Nested stacks are a good example of such a scenario.
 Outputs:
   VPCId:
+    Description: 'VPC ID of this VPC needs to be accessed by other templates such as the security_group.yaml'
     Value:
       Ref: VPC
+  PublicSubnet:
+    Description: 'Output the SubnetID of the public Subnet'
+    Value:
+      Ref: PublicSubnet
+  PrivateSubnet:
+    Description: 'Output the SubnetID of the public Subnet'
+    Value:
+      Ref: PrivateSubnet
+  PublicSubnet2:
+    Description: 'Output the SubnetID of the public Subnet 2'
+    Value:
+      Ref: PublicSubnet2
