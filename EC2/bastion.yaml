@@ -7,7 +7,7 @@ Parameters:
   RoleName:
     Type: String
     Default: 'rcloud-ec2-role'
-  InstanceType:
+  Instance:
     Type: String
     Default: 't3.nano'
     AllowedValues:
@@ -20,29 +20,29 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
   SubnetID:
-    Type: Type: AWS::EC2::Subnet::Id
+    Type: AWS::EC2::Subnet::Id
   BastionSecurityGroup:
-    Type: AWS::EC2::SecurityGroup::Id
+    Type: 'List<AWS::EC2::SecurityGroup::Id>'
 
 Resources:
   BastionHost:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType:
-        Ref: InstanceType
+        Ref: Instance
       KeyName: 
         Ref: KeyName
       ImageId:
         Ref: BastionAMI
-      SubnetId:
-        Ref: SubnetID
       SourceDestCheck: false
       IamInstanceProfile:
         Ref: RoleName
-      SecurityGroupIds:
-        Ref: BastionSecurityGroup
       NetworkInterfaces:  
       - AssociatePublicIpAddress: 'true'
         DeleteOnTermination: 'true'
         DeviceIndex: 0
+        GroupSet:
+          Ref: BastionSecurityGroup
+        SubnetId:
+          Ref: SubnetID
       
