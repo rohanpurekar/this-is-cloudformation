@@ -9,7 +9,7 @@ There is a boilerplate YAML file in the root directory which you can use to crea
 This template creates the following resources.
 
 * 1 AWS Virtual Private Cloud
-* 2 Subnets (Public and Private in the same AZ)
+* 4 Subnets (2 Public and 2 Private in the same AZ)
 * Internet Gateway
 * Network Address Translation Gateway
 * Bastion Host (In Public Subnet)
